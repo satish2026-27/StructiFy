@@ -1,0 +1,2 @@
+# StructiFy
+This tool is a protein sequence optimization platform that uses simulated annealing to introduce mutations and drive sequences toward a desired structural property (such as disorder score, scaling exponent, or compactness via Rg). Instead of predicting full 3D structures, it focuses on tuning protein disorder and conformational tendencies by balancing target values with tolerance constraints.
