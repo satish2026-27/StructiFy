@@ -1,6 +1,7 @@
 import { useState } from "react";
 import toast from "react-hot-toast";
 import NavBar from "../components/NavBar";
+import { runIDP } from "../lib/api";
 
 const Form = () => {
   const [target, setTarget] = useState(0);
@@ -10,11 +11,40 @@ const Form = () => {
   const [bufferSize, setBufferSize] = useState(2);
   const [penalty, setPenalty] = useState(0);
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    console.log({ target, startSequence, tolerance, scalingMethod, bufferSize, penalty });
-  };
+  const [loading, setLoading] = useState(false);
+  const [result, setResult] = useState(null);
+  const [error, setError] = useState("");
 
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError("");
+    setResult(null);
+    try {
+      // only sending required params now; extend later if backend supports more
+      const data = await runIDP(startSequence, target);
+      setResult(data);
+      toast.success("Backend run completed!");
+
+    } catch (err) {
+      console.error(err);
+      setError(err.message || "Request failed");
+      toast.error("Backend request failed");
+    } finally {
+      setLoading(false);
+    }
+  };
+    
+    
+      
+    
+
+  #const handleSubmit = (e) => {
+   # e.preventDefault();
+    #console.log({ target, startSequence, tolerance, scalingMethod, bufferSize, penalty });
+  #};
+
+  
   return (
     <>
     <NavBar />
@@ -153,6 +183,27 @@ const Form = () => {
           Submit
         </button>
       </form>
+      {loading && (
+  <div className="text-green-400 mt-4">Running… please wait</div>
+)}
+
+{error && (
+  <div className="mt-4 bg-red-100 text-red-700 rounded-xl p-3">{error}</div>
+)}
+
+{result && (
+  <div className="mt-6 rounded-xl border p-4 bg-white text-black">
+    <div className="text-sm text-gray-500 mb-1">Best sequence</div>
+    <div className="font-mono break-words">{result.best_sequence}</div>
+
+    <div className="mt-4 grid grid-cols-3 gap-4 text-sm">
+      <div><span className="text-gray-500">ν:</span> {result.nu.toFixed(5)}</div>
+      <div><span className="text-gray-500">distance:</span> {result.distance.toFixed(6)}</div>
+      <div><span className="text-gray-500">fitness:</span> {result.fitness.toFixed(6)}</div>
+    </div>
+  </div>
+)}
+
     </section>
     </>
   );
