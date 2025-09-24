@@ -2,6 +2,8 @@ import { useState } from "react";
 import toast from "react-hot-toast";
 import NavBar from "../components/NavBar";
 import { runIDP } from "../lib/api";
+const API_BASE = import.meta.env.VITE_API_BASE_URL;
+
 
 const Form = () => {
   const [target, setTarget] = useState(0);
