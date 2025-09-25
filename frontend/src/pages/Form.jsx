@@ -47,11 +47,7 @@ const Form = () => {
       
     
 
-  #const handleSubmit = (e) => {
-   # e.preventDefault();
-    #console.log({ target, startSequence, tolerance, scalingMethod, bufferSize, penalty });
-  #};
-
+  
   
   return (
     <>
