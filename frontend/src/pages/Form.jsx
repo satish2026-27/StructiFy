@@ -2,14 +2,15 @@ import { useState } from "react";
 import toast from "react-hot-toast";
 import NavBar from "../components/NavBar";
 import { runIDP } from "../lib/api";
-const API_BASE = import.meta.env.VITE_API_BASE_URL;
-
 
 const Form = () => {
-  const [target, setTarget] = useState(0);
   const [startSequence, setStartSequence] = useState("");
-  const [tolerance, setTolerance] = useState(0);
-  const [scalingMethod, setScalingMethod] = useState("exp");
+  const [scaling_exponent, setScalingExponent] = useState(true);
+  const [target_scaling_exp, setTargetScalingExp] = useState(0.3);
+  const [scaling_rg, setScalingRg] = useState(true);
+  const [target_rg, setTargetRg] = useState(0.3);
+  const [asphericity, setAsphericity] = useState(true);
+  const [target_asphericity, setTargetAsphericity] = useState(0.3);
   const [bufferSize, setBufferSize] = useState(2);
   const [penalty, setPenalty] = useState(0);
 
@@ -22,19 +23,18 @@ const Form = () => {
     setLoading(true);
     setError("");
     setResult(null);
+
     try {
-      // only sending required params now; extend later if backend supports more
       const data = await runIDP({
         start_seq: startSequence,
-        target,
-        tolerance,
-        scalingMethod,
+        ...(scaling_exponent && { target_scaling_exp }),
+        ...(scaling_rg && { target_rg }),
+        ...(asphericity && { target_asphericity }),
         bufferSize,
         penalty,
       });
       setResult(data);
       toast.success("Backend run completed!");
-
     } catch (err) {
       setError(err.message || "Request failed");
       toast.error("Backend request failed");
@@ -42,194 +42,183 @@ const Form = () => {
       setLoading(false);
     }
   };
-    
-    
-      
-    
 
-  
-  
   return (
     <>
-    <NavBar />
-    <section className="bg-black min-h-screen flex items-center justify-center px-6 py-16">
-      <form
-        onSubmit={handleSubmit}
-        className="bg-black bg-opacity-70 border border-white/10 rounded-2xl p-8 shadow-lg shadow-green-500/30 w-full max-w-xl flex flex-col gap-6"
-      >
-        {/* Header */}
-        <div className="text-center mb-4">
-          <h1 className="text-3xl font-extrabold text-white mb-2">
-            Protein Sequence Form
-          </h1>
-          <p className="text-gray-400 text-sm">
-            Enter your parameters to optimize your protein design
-          </p>
-        </div>
-
-        {/* Target */}
-        <label htmlFor="target" className="flex flex-col text-white">
-          Target Disorder Score
-          <input
-            id="target"
-            type="number"
-            value={target}
-            onChange={(e) => setTarget(Number(e.target.value))}
-            className="mt-2 px-4 py-3 rounded-xl bg-black border border-white/20 text-white placeholder-gray-500 focus:outline-none focus:border-green-400 focus:ring-2 focus:ring-green-400/40 transition"
-          />
-        </label>
-
-        {/* Start Sequence */}
-        <label htmlFor="start_seq" className="flex flex-col text-white">
-          Start Sequence
-          <input
-            id="start_seq"
-            type="text"
-            value={startSequence}
-            onKeyDown={(e) => {
-              const allowedChars = [
-                "A","C","D","E","F","G","H","I","K","L",
-                "M","N","P","Q","R","S","T","V","W","Y"
-              ];
-              const specialKeys = ["Backspace", "Delete", "ArrowLeft", "ArrowRight", "Shift", "CapsLock"];
-              if (!specialKeys.includes(e.key)) {
-                if (!allowedChars.includes(e.key.toUpperCase())) {
-                  e.preventDefault();
-                  toast.error("That character is not allowed!")
-                  console.log("That character is not allowed!");
-                }
-              }
-            }}
-            onChange={(e) => setStartSequence(e.target.value.toUpperCase())}
-            placeholder="e.g. ACDEFGHIK"
-            className="mt-2 px-4 py-3 rounded-xl bg-black border border-white/20 text-white placeholder-gray-500 focus:outline-none focus:border-green-400 focus:ring-2 focus:ring-green-400/40 transition"
-          />
-        </label>
-
-        {/* Scaling Method */}
-        <fieldset className="flex flex-col gap-2 text-white">
-          <legend className="mb-1">Scaling Method</legend>
-
-        <label className="flex items-center gap-2">
-          <input
-            type="radio"
-            name="scaling"
-            value="exp"
-            checked={scalingMethod === "exp"}
-            onChange={() => setScalingMethod("exp")}
-            className="accent-green-500 w-5 h-5"
-          />
-          Exponential Scaling (0.01 – 0.05)
-        </label>
-
-        <label className="flex items-center gap-2">
-          <input
-            type="radio"
-            name="scaling"
-            value="rg"
-            checked={scalingMethod === "rg"}
-            onChange={() => setScalingMethod("rg")}
-            className="accent-green-500 w-5 h-5"
-          />
-          Rg Scaling (0.1 – 0.5)
-        </label>
-      </fieldset>
-
-
-        {/* Tolerance */}
-        <label htmlFor="tolerance" className="flex flex-col text-white">
-          Tolerance
-          <input
-            id="tolerance"
-            type="number"
-            step="0.01"
-            max="0.1"
-            value={tolerance}
-            onChange={(e) => setTolerance(Number(e.target.value))}
-            className="mt-2 px-4 py-3 rounded-xl bg-black border border-white/20 text-white placeholder-gray-500 focus:outline-none focus:border-green-400 focus:ring-2 focus:ring-green-400/40 transition"
-          />
-        </label>
-
-        <div className="flex flex-col gap-3">
-
-          <label htmlFor="buffer_size" className="flex items-center gap-3 text-white">
-            Buffer size
-            <input
-              id="buffer_size"
-              type="number"
-              value = {bufferSize}
-              onChange={(e) => setBufferSize(Number(e.target.value))}
-              className="mt-2 px-4 py-3 rounded-xl bg-black border border-white/20 text-white placeholder-gray-500 focus:outline-none focus:border-green-400 focus:ring-2 focus:ring-green-400/40 transition"
-            />
-            
-          </label>
-
-          <label htmlFor="esm2_likelihood_penalty" className="flex items-center gap-3 text-white">
-            Likelihood Penalty (ESM-2)
-            <input
-              id="penalty"
-              type="number"
-              value={penalty}
-              onChange={(e) => setPenalty(Number(e.target.value))}
-              className="mt-2 px-4 py-3 rounded-xl bg-black border border-white/20 text-white placeholder-gray-500 focus:outline-none focus:border-green-400 focus:ring-2 focus:ring-green-400/40 transition"
-            />
-            
-          </label>
-            
-
-        </div>
-
-        {/* Submit */}
-        <button
-          type="submit"
-          className="mt-4 px-6 py-3 bg-green-500 hover:bg-green-600 rounded-xl font-semibold text-black shadow-lg shadow-green-500/40 transition"
+      <NavBar />
+      <section className="bg-black min-h-screen flex items-start justify-center px-6 py-16">
+        <form
+          onSubmit={handleSubmit}
+          className="bg-black bg-opacity-70 p-10  w-full max-w-5xl rounded-2xl flex flex-col gap-6"
         >
-          Submit
-        </button>
-        {loading && (
-  <div className="text-green-400">Running… please wait</div>
-)}
-{error && (
-  <div className="bg-red-100 text-red-700 rounded-xl p-3 mt-2">{error}</div>
-)}
-{result && (
-  <div className="mt-4 rounded-xl border p-4 bg-white text-black">
-    <div className="text-sm text-gray-500 mb-1">Best sequence</div>
-    <div className="font-mono break-words">{result.best_sequence}</div>
-    <div className="mt-4 grid grid-cols-3 gap-4 text-sm">
-      <div><span className="text-gray-500">ν:</span> {Number(result.nu).toFixed(5)}</div>
-      <div><span className="text-gray-500">distance:</span> {Number(result.distance).toFixed(6)}</div>
-      <div><span className="text-gray-500">fitness:</span> {Number(result.fitness).toFixed(6)}</div>
-    </div>
-  </div>
-)}
+          {/* Header */}
+          <div className="text-center mb-4">
+            <h1 className="text-3xl font-extrabold text-green-400 mb-2">
+              Protein Sequence Optimizer
+            </h1>
+            <p className="text-gray-400 text-sm">
+              Configure your parameters to generate the optimal protein design.
+            </p>
+          </div>
 
-      </form>
-      {loading && (
-  <div className="text-green-400 mt-4">Running… please wait</div>
-)}
+          {/* Start Sequence */}
+          <div className="flex flex-col gap-2">
+            <label htmlFor="start_seq" className="text-gray-200 font-medium">
+              Start Sequence
+            </label>
+            <input
+              id="start_seq"
+              type="text"
+              value={startSequence}
+              onKeyDown={(e) => {
+                const allowedChars = [
+                  "A","C","D","E","F","G","H","I","K","L",
+                  "M","N","P","Q","R","S","T","V","W","Y"
+                ];
+                const specialKeys = ["Backspace", "Delete", "ArrowLeft", "ArrowRight", "Shift", "CapsLock"];
+                if (!specialKeys.includes(e.key)) {
+                  if (!allowedChars.includes(e.key.toUpperCase())) {
+                    e.preventDefault();
+                    toast.error("That character is not allowed!");
+                  }
+                }
+              }}
+              onChange={(e) => setStartSequence(e.target.value.toUpperCase())}
+              placeholder="e.g. ACDEFGHIK"
+              className="px-4 py-3 rounded-xl bg-black border border-green-400/30 text-white placeholder-gray-500 focus:outline-none focus:border-green-400 focus:ring-2 focus:ring-green-400/40 transition"
+            />
+          </div>
 
-{error && (
-  <div className="mt-4 bg-red-100 text-red-700 rounded-xl p-3">{error}</div>
-)}
+          {/* Parameters Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-4">
+            {/* Left Column */}
+            <div className="flex flex-col gap-4">
+              {/* Scaling Exponent */}
+              <div className="flex flex-col gap-2">
+                <label className="flex items-center gap-3 text-white">
+                  <input
+                    type="checkbox"
+                    checked={scaling_exponent}
+                    onChange={(e) => setScalingExponent(e.target.checked)}
+                    className="w-4 h-4 accent-green-500 cursor-pointer"
+                  />
+                  Enable Scaling Exponent
+                </label>
+                {scaling_exponent && (
+                  <input
+                    type="number"
+                    value={target_scaling_exp}
+                    onChange={(e) => setTargetScalingExp(Number(e.target.value))}
+                    className="w-28 px-3 py-2 rounded bg-black text-white border border-green-400/30 focus:outline-none focus:border-green-400"
+                    placeholder="0.3"
+                  />
+                )}
+              </div>
 
-{result && (
-  <div className="mt-6 rounded-xl border p-4 bg-white text-black">
-    <div className="text-sm text-gray-500 mb-1">Best sequence</div>
-    <div className="font-mono break-words">{result.best_sequence}</div>
+              {/* Buffer Size */}
+              <label className="flex flex-col text-white">
+                Buffer Size
+                <input
+                  type="number"
+                  value={bufferSize}
+                  onChange={(e) => setBufferSize(Number(e.target.value))}
+                  className="mt-1 px-3 py-2 rounded-xl bg-black border border-green-400/30 text-white focus:outline-none focus:border-green-400"
+                />
+              </label>
+            </div>
 
-    <div className="mt-4 grid grid-cols-3 gap-4 text-sm">
-      <div><span className="text-gray-500">ν:</span> {result.nu.toFixed(5)}</div>
-      <div><span className="text-gray-500">distance:</span> {result.distance.toFixed(6)}</div>
-      <div><span className="text-gray-500">fitness:</span> {result.fitness.toFixed(6)}</div>
-    </div>
-  </div>
-)}
+            {/* Right Column */}
+            <div className="flex flex-col gap-4">
+              {/* Radius of Gyration */}
+              <div className="flex flex-col gap-2">
+                <label className="flex items-center gap-3 text-white">
+                  <input
+                    type="checkbox"
+                    checked={scaling_rg}
+                    onChange={(e) => setScalingRg(e.target.checked)}
+                    className="w-4 h-4 accent-green-500 cursor-pointer"
+                  />
+                  Enable Radius of Gyration
+                </label>
+                {scaling_rg && (
+                  <input
+                    type="number"
+                    value={target_rg}
+                    onChange={(e) => setTargetRg(Number(e.target.value))}
+                    className="w-28 px-3 py-2 rounded bg-black text-white border border-green-400/30 focus:outline-none focus:border-green-400"
+                    placeholder="0.3"
+                  />
+                )}
+              </div>
 
-    </section>
+              {/* Asphericity */}
+              <div className="flex flex-col gap-2">
+                <label className="flex items-center gap-3 text-white">
+                  <input
+                    type="checkbox"
+                    checked={asphericity}
+                    onChange={(e) => setAsphericity(e.target.checked)}
+                    className="w-4 h-4 accent-green-500 cursor-pointer"
+                  />
+                  Enable Asphericity
+                </label>
+                {asphericity && (
+                  <input
+                    type="number"
+                    value={target_asphericity}
+                    onChange={(e) =>
+                      setTargetAsphericity(Number(e.target.value))
+                    }
+                    className="w-28 px-3 py-2 rounded bg-black text-white border border-green-400/30 focus:outline-none focus:border-green-400"
+                    placeholder="0.3"
+                  />
+                )}
+              </div>
+
+              {/* Likelihood Penalty */}
+              <label className="flex flex-col text-white">
+                Likelihood Penalty (ESM-2)
+                <input
+                  type="number"
+                  value={penalty}
+                  onChange={(e) => setPenalty(Number(e.target.value))}
+                  className="mt-1 px-3 py-2 rounded-xl bg-black border border-green-400/30 text-white focus:outline-none focus:border-green-400"
+                />
+              </label>
+            </div>
+          </div>
+
+          {/* Submit Button */}
+          <button
+            type="submit"
+            className="mt-6 px-6 py-3 bg-green-500 hover:bg-green-600 rounded-xl font-semibold text-black shadow-lg shadow-green-500/40 transition"
+          >
+            {loading ? "Running…" : "Submit"}
+          </button>
+
+          {/* Results */}
+          <div className="mt-8 text-center">
+            {error && (
+              <div className="mt-4 bg-red-100 text-red-700 rounded-xl p-3">{error}</div>
+            )}
+            {result && (
+              <div className="mt-6 rounded-xl border border-green-400/30 p-5 bg-black text-green-100 max-w-3xl mx-auto">
+                <div className="text-sm text-gray-400 mb-2">Best sequence:</div>
+                <div className="font-mono text-lg break-words text-green-300">
+                  {result.best_sequence}
+                </div>
+                <div className="mt-4 grid grid-cols-3 gap-4 text-sm">
+                  <div><span className="text-gray-400">ν:</span> {result.nu.toFixed(5)}</div>
+                  <div><span className="text-gray-400">Distance:</span> {result.distance.toFixed(6)}</div>
+                  <div><span className="text-gray-400">Fitness:</span> {result.fitness.toFixed(6)}</div>
+                </div>
+              </div>
+            )}
+          </div>
+        </form>
+      </section>
     </>
   );
 };
 
 export default Form;
-
