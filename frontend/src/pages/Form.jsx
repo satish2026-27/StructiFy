@@ -5,6 +5,7 @@ import { runIDP } from "../lib/api";
 
 const Form = () => {
   const [startSequence, setStartSequence] = useState("");
+  const [invalidChar, setInvalidChar] = useState("");
   const [scaling_exponent, setScalingExponent] = useState(true);
   const [target_scaling_exp, setTargetScalingExp] = useState(0.3);
   const [scaling_rg, setScalingRg] = useState(true);
@@ -75,11 +76,15 @@ const Form = () => {
                   "A","C","D","E","F","G","H","I","K","L",
                   "M","N","P","Q","R","S","T","V","W","Y"
                 ];
-                const specialKeys = ["Backspace", "Delete", "ArrowLeft", "ArrowRight", "Shift", "CapsLock"];
+                const specialKeys = ["Backspace", "Delete", "ArrowLeft", "ArrowRight", "Shift", "CapsLock", "Control"];
                 if (!specialKeys.includes(e.key)) {
                   if (!allowedChars.includes(e.key.toUpperCase())) {
                     e.preventDefault();
-                    toast.error("That character is not allowed!");
+                    setInvalidChar(e.key.toUpperCase());
+                    return;
+                  }
+                  else{
+                    setInvalidChar("");
                   }
                 }
               }}
@@ -87,6 +92,18 @@ const Form = () => {
               placeholder="e.g. ACDEFGHIK"
               className="px-4 py-3 rounded-xl bg-black border border-green-400/30 text-white placeholder-gray-500 focus:outline-none focus:border-green-400 focus:ring-2 focus:ring-green-400/40 transition"
             />
+              {/* Display invalid character message */}
+            <div className = "flex justify-between">
+              {invalidChar && (
+                <p className="text-red-400 text-sm mt-1">
+                  Character "{invalidChar}" is not allowed.
+                </p>
+              )}
+
+                <p className="text-gray-400 text-sm mt-1">
+                  {startSequence.length} {startSequence.length === 1 ? "character" : "characters"} entered
+                </p>
+            </div>
           </div>
 
           {/* Parameters Grid */}
